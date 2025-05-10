@@ -1,0 +1,225 @@
+forms.py 
+
+
+
+from django import forms 
+from .models import Feedback 
+class FeedbackForm(forms.ModelForm): 
+    class Meta: 
+        model = Feedback 
+        fields = ['name', 'email', 'feedback', 'rating', 'comments'] 
+
+
+
+   
+views.py 
+
+
+from django.shortcuts import render, redirect 
+from .forms import FeedbackForm 
+from .models import Feedback 
+def feedback_view(request): 
+    if request.method == 'POST': 
+        form = FeedbackForm(request.POST) 
+        if form.is_valid(): 
+            form.save()  # Save the data to the database 
+            return redirect('feedback_list')  # Redirect to a page that shows all feedback 
+    else: 
+        form = FeedbackForm() 
+    return render(request, 'feedback_form.html', {'form': form}) 
+def feedback_list(request): 
+    feedbacks = Feedback.objects.all()  # Retrieve all feedback entries from the database 
+    return render(request, 'feedback_list.html', {'feedbacks': feedbacks}) 
+
+
+
+urls.py 
+
+
+from django.contrib import admin 
+from django.urls import path 
+from myapp import views 
+urlpatterns = [ 
+    path('admin/', admin.site.urls), 
+    path('feedback/', views.feedback_view, name='feedback_form'),         # URL for feedback 
+form 
+    path('feedback/list/', views.feedback_list, name='feedback_list'), 
+    
+] 
+
+
+
+models.py 
+
+
+from django.db import models 
+class Feedback(models.Model): 
+    name = models.CharField(max_length=100) 
+    email = models.EmailField() 
+    feedback = models.TextField() 
+    rating = models.IntegerField() 
+    comments = models.TextField() 
+    def __str__(self): 
+        return self.name 
+
+
+
+Feedback_form .html 
+
+
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <link rel="stylesheet" 
+href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> 
+    <style> 
+        /* Custom CSS */ 
+        body { 
+            background-color: #f4f6f7; 
+            font-family: Arial, sans-serif; 
+        } 
+        .container { 
+            margin-top: 50px; 
+            max-width: 600px; 
+            background-color: #ffffff; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+        } 
+        h1 { 
+            color: #007bff; 
+            text-align: center; 
+            margin-bottom: 30px; 
+        } 
+        .form-group { 
+            margin-bottom: 20px; 
+        } 
+        label { 
+            font-weight: bold; 
+        } 
+        input, select, textarea { 
+            border: 1px solid #ced4da; 
+            border-radius: 4px; 
+            padding: 10px; 
+            width: 100%; 
+            margin-top: 5px; 
+        } 
+        input:focus, select:focus, textarea:focus { 
+            border-color: #007bff; 
+            outline: none; 
+        } 
+        button { 
+            width: 100%; 
+            padding: 10px; 
+            font-size: 16px; 
+            background-color: #007bff; 
+            border: none; 
+            border-radius: 4px; 
+            color: white; 
+            cursor: pointer; 
+        } 
+        button:hover { 
+            background-color: #0056b3; 
+        } 
+    </style> 
+    <title>Feedback Form</title> 
+</head> 
+<body> 
+    <div class="container"> 
+        <h1>Workshop Feedback Form</h1> 
+        <form method="POST"> 
+            {% csrf_token %} 
+            {{ form.as_p }} 
+            <button type="submit" class="btn btn-primary">Submit Feedback</button> 
+        </form> 
+    </div> 
+</body> 
+</html> 
+
+
+
+
+
+
+feedback_list.html 
+
+
+
+
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <link rel="stylesheet" 
+href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> 
+    <style> 
+        /* Custom CSS */ 
+        body { 
+            background-color: #f8f9fa; 
+            font-family: Arial, sans-serif; 
+        } 
+        .container { 
+            margin-top: 50px; 
+        } 
+        h1 { 
+            color: #5bc0de; 
+            text-align: center; 
+            margin-bottom: 30px; 
+        } 
+        table { 
+            background-color: #ffffff; 
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+        } 
+        th { 
+            background-color: #5bc0de; 
+            color: white; 
+            text-align: center; 
+        } 
+        td { 
+            text-align: center; 
+        } 
+        tr:nth-child(even) { 
+            background-color: #f2f2f2; 
+        } 
+        tr:hover { 
+            background-color: #d1ecf1; 
+        } 
+        .table-container { 
+            margin-bottom: 50px; 
+        } 
+    </style> 
+    <title>Feedback List</title> 
+</head> 
+<body> 
+    <div class="container"> 
+        <h1> ALL Feedbacks</h1> 
+        <div class="table-container"> 
+            <table class="table table-striped"> 
+                <thead> 
+                    <tr> 
+                        <th>Name</th> 
+                        <th>Email</th> 
+                        <th>Feedback </th> 
+                        <th>Rating</th> 
+                        <th>Comments</th> 
+                    </tr> 
+                </thead> 
+                <tbody> 
+                    {% for feedback in feedbacks %} 
+                    <tr> 
+                        <td>{{ feedback.name }}</td> 
+                        <td>{{ feedback.email }}</td> 
+                        <td>{{ feedback.feedback }}</td> 
+                        <td>{{ feedback.rating }}</td> 
+                        <td>{{ feedback.comments }}</td> 
+                    </tr> 
+                    {% endfor %} 
+                </tbody> 
+            </table> 
+        </div> 
+    </div> 
+</body> 
+</html>   

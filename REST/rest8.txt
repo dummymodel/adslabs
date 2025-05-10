@@ -1,0 +1,222 @@
+Views.py
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
+
+def home(request):
+    return render(request, 'app/home.html')
+
+def custom_login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            if user.is_superuser:
+                return redirect('admin_only')
+            else:
+                return render(request, 'app/403.html', status=403)
+    else:
+        form = AuthenticationForm()
+    return render(request, 'app/login.html', {'form': form})
+
+@login_required
+def admin_only(request):
+    if request.user.is_superuser:
+        return render(request, 'app/admin_only.html')
+    else:
+        return render(request, 'app/403.html', status=403)
+
+
+
+
+urls.py(myapp)
+
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('login/', views.custom_login_view, name='login'),
+    path('admin-only/', views.admin_only, name='admin_only'),
+]
+
+
+
+
+Urls.py
+
+
+
+from django.contrib import admin
+from django.urls import path, include
+from django.contrib.auth import views as auth_views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('app.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
+
+    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
+]
+
+
+
+
+home.html
+
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f3f3;
+            text-align: center;
+            padding-top: 100px;
+        }
+        a.button {
+            text-decoration: none;
+            color: white;
+            background: #007BFF;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px;
+            display: inline-block;
+        }
+        a.button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Home Page</h1>
+    <a class="button" href="{% url 'admin_only' %}">Go to Admin Page</a>
+    
+    {% if user.is_authenticated %}
+        <a class="button" href="{% url 'logout' %}">Logout</a>
+    {% endif %}
+</body>
+</html>
+
+
+403.html
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>403 Forbidden</title>
+</head>
+<body>
+    <h2>403 Forbidden</h2>
+    <p>You are not authorized to view this page.</p>
+</body>
+</html>
+
+Admin_only.html
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Admin Page</title>
+</head>
+<body>
+    <h2>Welcome, Admin!</h2>
+    <p>You have access to this page.</p>
+    <a href="{% url 'logout' %}">Logout</a>
+
+</body>
+</html>
+
+
+
+
+login.html
+
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f3;
+            color: #333;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        form {
+            background-color: #fff;
+            display: inline-block;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            margin-top: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        form button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #2980b9;
+        }
+
+        .errorlist {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            list-style-type: none;
+            padding-left: 0;
+        }
+    </style>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Login</button>
+    </form>
+</body>
+</html>
+
+
+
+ 
+
+ 
+
+
+ 
+
+
+

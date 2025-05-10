@@ -1,0 +1,188 @@
+models.py(book) :
+
+
+from django.db import models 
+class Book(models.Model): 
+    title = models.CharField(max_length=200) 
+    author = models.CharField(max_length=100) 
+    published_date = models.DateField() 
+    isbn = models.CharField(max_length=13, unique=True) 
+def __str__(self): 
+        return self.title 
+
+
+ 
+urls.py(book) :
+
+
+from django.urls import path 
+from .views import book_list 
+urlpatterns = [ 
+    path('', book_list, name='book_list'), 
+] 
+
+
+ 
+views.py(book) :
+
+
+from django.shortcuts import render 
+from django.http import HttpResponseRedirect 
+from .models import Book 
+ 
+def book_list(request): 
+    if request.method == "POST": 
+        title = request.POST.get('title') 
+        author = request.POST.get('author') 
+        published_date = request.POST.get('published_date') 
+        isbn = request.POST.get('isbn') 
+ 
+        if title and author and published_date and isbn: 
+            Book.objects.create(title=title, author=author, published_date=published_date, isbn=isbn) 
+ return HttpResponseRedirect('/')  # Refresh the page after submission 
+books = Book.objects.all()  # Retrieve all books 
+return render(request, 'books/book_list.html', {'books': books}) 
+ 
+ 
+urls.py(lib) 
+from django.contrib import admin 
+from django.urls import path, include 
+urlpatterns = [ 
+    path('admin/', admin.site.urls), 
+    path('', include('books.urls')),  # Include app URLs 
+] 
+ 
+
+
+
+
+
+
+book_list.html :
+
+
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Book List</title> 
+    <style> 
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background-color: #f4f4f4; 
+            margin: 0; 
+            padding: 0; 
+            text-align: center; 
+        } 
+ 
+        .container { 
+            width: 80%; 
+            margin: auto; 
+            background: #fff; 
+            padding: 20px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+            border-radius: 10px; 
+            margin-top: 30px; 
+        } 
+ 
+        h1 { 
+            background-color: #333; 
+            color: white; 
+            padding: 15px; 
+            margin: 0; 
+            border-top-left-radius: 10px; 
+            border-top-right-radius: 10px; 
+        } 
+ 
+        table { 
+            width: 100%; 
+            margin-top: 20px; 
+            border-collapse: collapse; 
+            background-color: white; 
+        } 
+ 
+        th, td { 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            text-align: left; 
+        } 
+ 
+        th { 
+            background-color: #333; 
+            color: white; 
+        } 
+ 
+        tr:hover { 
+            background-color: #f1f1f1; 
+        } 
+ 
+        form { 
+            margin-top: 20px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 10px; 
+        } 
+ 
+        input { 
+            padding: 10px; 
+            width: 200px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+        } 
+ 
+        button { 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            border-radius: 5px; 
+        } 
+ 
+        button:hover { 
+            background-color: #218838; 
+        } 
+ 
+    </style> 
+</head> 
+<body> 
+ 
+    <div class="container"> 
+        <h1>           Book List</h1> 
+ 
+        <table> 
+            <tr> 
+                <th>Title</th> 
+                <th>Author</th> 
+                <th>Published Date</th> 
+                <th>ISBN</th> 
+            </tr> 
+            {% for book in books %} 
+            <tr> 
+                <td>{{ book.title }}</td> 
+                <td>{{ book.author }}</td> 
+                <td>{{ book.published_date }}</td> 
+                <td>{{ book.isbn }}</td> 
+            </tr> 
+            {% empty %} 
+            <tr> 
+                <td colspan="4">No books available</td> 
+            </tr> 
+            {% endfor %} 
+        </table> 
+ 
+        <h2>Add a New Book</h2> 
+        <form method="POST"> 
+            {% csrf_token %} 
+            <input type="text" name="title" placeholder="Title" required> 
+            <input type="text" name="author" placeholder="Author" required> 
+            <input type="date" name="published_date" required> 
+            <input type="text" name="isbn" placeholder="ISBN" required> 
+            <button type="submit">   Add Book</button> 
+        </form> 
+    </div> 
+ 
+</body> 
+</html> 

@@ -1,0 +1,144 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <title>User Registration</title> 
+    <link rel="stylesheet" 
+href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"> 
+</head> 
+<body> 
+    <div class="container mt-5"> 
+        <h2 class="text-center">User Registration</h2> 
+        <form method="post" class="shadow p-4 bg-white"> 
+            {% csrf_token %} 
+            {{ form.as_p }} 
+            <button type="submit" class="btn btn-primary w-100">Register</button> 
+        </form> 
+    </div> 
+</body> 
+</html> 
+Success.html 
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <title>Registration Successful</title> 
+    <link rel="stylesheet" 
+href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"> 
+    <style> 
+        body { 
+            background-color: #f8f9fa; 
+        } 
+        .success-container { 
+            margin-top: 100px; 
+            padding: 40px; 
+            background: white; 
+            border-radius: 10px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+        } 
+        h2 { 
+            color: #28a745 } 
+        a { 
+            text-decoration: none; 
+        } 
+    </style> 
+</head> 
+<body> 
+    <div class="container d-flex justify-content-center"> 
+        <div class="col-md-6 success-container text-center"> 
+            <h2>Registration Successful!</h2> 
+            <p>Your account has been created successfully.</p> 
+            <a href="{% url 'register' %}" class="btn btn-secondary mt-2">Register Another User</a> 
+        </div> 
+    </div> 
+</body> 
+</html> 
+ 
+ 
+ 
+
+
+ 
+Forms.py 
+
+
+from django import forms 
+from .models import User 
+class RegistrationForm(forms.ModelForm): 
+    password = forms.CharField(widget=forms.PasswordInput) 
+    confirm_password = forms.CharField(widget=forms.PasswordInput) 
+    class Meta: 
+        model = User 
+       fields = ['full_name', 'username', 'email', 'password', 'confirm_password', 'date_of_birth'] 
+def clean(self): 
+        cleaned_data = super().clean() 
+        password = cleaned_data.get("password") 
+        confirm_password = cleaned_data.get("confirm_password") 
+ if password and confirm_password and password != confirm_password: 
+            self.add_error('confirm_password', "Passwords do not match.") 
+ 
+
+
+
+models.py 
+
+
+from django.db import models 
+class User(models.Model): 
+    full_name = models.CharField(max_length=255) 
+    username = models.CharField(max_length=150, unique=True) 
+    email = models.EmailField(unique=True) 
+    password = models.CharField(max_length=255) 
+    date_of_birth = models.DateField() 
+    def __str__(self): 
+        return self.username 
+
+
+
+myapp\urls.py 
+
+
+from django.urls import path 
+from .views import register, success 
+urlpatterns = [ 
+    path('register/', register, name='register'), 
+    path('success/', success, name='success'), 
+] 
+
+
+
+Views.py 
+
+
+from django.shortcuts import render, redirect 
+from .forms import RegistrationForm 
+from .models import User 
+def register(request): 
+    if request.method == 'POST': 
+        form = RegistrationForm(request.POST) 
+        if form.is_valid(): 
+            user = form.save(commit=False) 
+            user.password = form.cleaned_data['password']  # Hash password in production 
+            user.save() 
+            return redirect('success') 
+ else: 
+        form = RegistrationForm() 
+    return render(request, 'register.html', {'form': form}) 
+def success(request): 
+    return render(request, 'success.html') 
+
+
+
+myproject\urls.py 
+
+
+
+
+from django.contrib import admin 
+from django.urls import path, include 
+urlpatterns = [ 
+    path('admin/', admin.site.urls), 
+    path('', include('myapp6.urls')),  # This line should be correct 
+] 

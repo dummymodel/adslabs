@@ -1,0 +1,140 @@
+Views.py
+
+
+
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.contrib.auth.views import LoginView
+
+class CustomLoginView(LoginView):
+    template_name = 'myapp/login.html'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.request.session['session_key'] = f"This is a session for {self.request.user.username}"
+        response.set_cookie('user_cookie', self.request.user.username, max_age=86400)
+        return response
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@login_required
+def set_data(request):
+    response = HttpResponse("Cookie and Session set successfully!")
+    response.set_cookie('user_cookie', request.user.username, max_age=86400)
+    request.session['session_key'] = f"This is a session for {request.user.username}"
+    return response
+
+@login_required
+def show_data(request):
+    user_cookie = request.COOKIES.get('user_cookie', 'No cookie found')
+    session_data = request.session.get('session_key', 'No session data found')
+    context = {
+        'cookie': user_cookie,
+        'session': session_data
+    }
+    return render(request, 'myapp/show_data.html', context)
+
+
+
+
+
+urls.py(myapp)
+
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.show_data, name='home'),
+    path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('set/', views.set_data, name='set_data'),
+    path('show/', views.show_data, name='show_data'),
+]
+
+
+
+Urls.py
+
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('myapp.urls')),
+]
+
+
+
+
+home.html
+
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'myapp/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome {{ request.user.username }}</h2>
+        <p><strong>Session:</strong> {{ session_data }}</p>
+        <p><strong>Cookie:</strong> {{ cookie_data }}</p>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+</body>
+</html>
+
+Login.html
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="{% static 'myapp/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>
+
+Show_data.html
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cookie & Session</title>
+    <link rel="stylesheet" href="{% static 'myapp/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome {{ request.user.username }}</h2>
+        <p><strong>Session:</strong> {{ session }}</p>
+        <p><strong>Cookie:</strong> {{ cookie }}</p>
+        <a href="{% url 'set_data' %}">Set Cookie & Session</a><br><br>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+</body>
+</html>
+
+
+ 
+
+
+ 
+
+

@@ -1,0 +1,163 @@
+models.py 
+ 
+from django.db import models 
+class Feature(models.Model): 
+    name = models.CharField(max_length=100) 
+    icon = models.CharField(max_length=100)  # store icon class (like from Font Awesome) 
+ 
+    def __str__(self): 
+        return self.name 
+ 
+class Product(models.Model): 
+    name = models.CharField(max_length=100) 
+    category = models.CharField(max_length=100) 
+    image = models.ImageField(upload_to='products/') 
+ 
+    def __str__(self): 
+        return self.name 
+ 
+
+
+
+
+views.py 
+ 
+from django.shortcuts import render 
+from .models import Feature, Product 
+def home(request): 
+    features = Feature.objects.all() 
+    products = Product.objects.all() 
+    context = { 
+        'store_name': 'My General Store', 
+        'store_aim': 'To provide quality goods at affordable prices, right to your doorstep!', 
+        'features': features, 
+        'products': products, 
+        'contact': { 
+            'phone': '+91-1234567890', 
+            'email': 'contact@generalstore.com', 
+            'address': '123 Main Street, YourCity' 
+        } 
+    } 
+    return render(request, 'store/home.html', context) 
+ 
+ 
+
+
+
+store/urls.py 
+ 
+from django.urls import path 
+from . import views 
+urlpatterns = [ 
+    path('', views.home, name='home'), 
+] 
+ 
+
+
+
+general_store/urls.py 
+ 
+from django.contrib import admin 
+from django.urls import path, include 
+from django.conf import settings 
+from django.conf.urls.static import static 
+urlpatterns = [ 
+    path('admin/', admin.site.urls), 
+    path('', include('store.urls')), 
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+ 
+
+
+
+
+
+home.html 
+ 
+<!DOCTYPE html> 
+<html> 
+<head> 
+    <title>{{ store_name }}</title> 
+    <link rel="stylesheet" href="{% static 'store/styles.css' %}"> 
+</head> 
+<body> 
+    <header> 
+        <h1>{{ store_name }}</h1> 
+        <p>{{ store_aim }}</p> 
+    </header> 
+    <section> 
+        <h2>Our Features</h2> 
+        <div class="features"> 
+            {% for feature in features %} 
+                <div class="feature-card"> 
+                    <i class="{{ feature.icon }}"></i> 
+                    <p>{{ feature.name }}</p> 
+                </div> 
+            {% endfor %} 
+        </div> 
+    </section> 
+ 
+    <section> 
+        <h2>Our Products</h2> 
+        <div class="product-gallery"> 
+            {% for product in products %} 
+                <div class="product-card"> 
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}"> 
+                    <p>{{ product.name }}</p> 
+                    <small>{{ product.category }}</small> 
+                </div> 
+            {% endfor %} 
+        </div> 
+    </section> 
+ 
+    <section> 
+        <h2>Contact Us</h2> 
+        <p>Phone: {{ contact.phone }}</p> 
+        <p>Email: {{ contact.email }}</p> 
+        <p>Address: {{ contact.address }}</p> 
+    </section> 
+</body> 
+</html> 
+ 
+
+
+
+
+
+admin.py 
+ 
+from django.contrib import admin 
+from .models import Feature, Product 
+admin.site.register(Feature) 
+admin.site.register(Product) 
+ 
+
+
+
+
+
+styles.css 
+ 
+body { 
+    font-family: Arial, sans-serif; 
+    margin: 20px; 
+} 
+header, section { 
+    margin-bottom: 40px; 
+} 
+.features, .product-gallery { 
+    display: flex; 
+    gap: 20px; 
+    flex-wrap: wrap; 
+} 
+.feature-card, .product-card { 
+    border: 1px solid #ddd; 
+    padding: 15px; 
+    border-radius: 8px; 
+width: 150px; 
+text-align: center; 
+} 
+.product-card img { 
+width: 100%; 
+height: auto; 
+border-radius: 4px; 
+} 
